@@ -195,25 +195,44 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
             
             messageBuilder.append(FormatUtil.filter(manager.getBot().getConfig().getSuccess()+" **Now Playing in "+guild.getSelfMember().getVoiceState().getChannel().getName()+"...**"));
             
-            setAttributesOnEmbedBuilder(guild, track, embedBuilder);
+            embedBuilder.setColor(guild.getSelfMember().getColor());
+            
+            setAuthorOnEmbedBuilder(guild, embedBuilder);
+
+            setTitleOnEmbedBuilder(track, embedBuilder);
+
+            setThumbnailOnEmbedBuilder(track, embedBuilder);
+            
+            setFooterOnEmbedBuilder(track, embedBuilder);
+
+            setDescriptionOnEmbedBuilder(track, embedBuilder);
             
             return messageBuilder.setEmbed(embedBuilder.build()).build();
         }
         else return null;
     }
 
-	private void setAttributesOnEmbedBuilder(Guild guild, AudioTrack track, EmbedBuilder embedBuilder) {
-		embedBuilder.setColor(guild.getSelfMember().getColor());
-		
-		if(getRequester() != 0)
-		{
-		    User user = guild.getJDA().getUserById(getRequester());
-		    if(user==null)
-		        embedBuilder.setAuthor("Unknown (ID:"+getRequester()+")", null, null);
-		    else
-		        embedBuilder.setAuthor(user.getName()+"#"+user.getDiscriminator(), null, user.getEffectiveAvatarUrl());
-		}
+	private void setDescriptionOnEmbedBuilder(AudioTrack track, EmbedBuilder embedBuilder) {
+		double progress = (double)audioPlayer.getPlayingTrack().getPosition()/track.getDuration();
+		embedBuilder.setDescription((audioPlayer.isPaused() ? JMusicBot.PAUSE_EMOJI : JMusicBot.PLAY_EMOJI)
+		        + " "+FormatUtil.progressBar(progress)
+		        + " `[" + FormatUtil.formatTime(track.getPosition()) + "/" + FormatUtil.formatTime(track.getDuration()) + "]` "
+		        + FormatUtil.volumeIcon(audioPlayer.getVolume()));
+	}
 
+	private void setFooterOnEmbedBuilder(AudioTrack track, EmbedBuilder embedBuilder) {
+		if(track.getInfo().author != null && !track.getInfo().author.isEmpty())
+		    embedBuilder.setFooter("Source: " + track.getInfo().author, null);
+	}
+
+	private void setThumbnailOnEmbedBuilder(AudioTrack track, EmbedBuilder embedBuilder) {
+		if(track instanceof YoutubeAudioTrack && manager.getBot().getConfig().useNPImages())
+		{
+		    embedBuilder.setThumbnail("https://img.youtube.com/vi/"+track.getIdentifier()+"/mqdefault.jpg");
+		}
+	}
+
+	private void setTitleOnEmbedBuilder(AudioTrack track, EmbedBuilder embedBuilder) {
 		try 
 		{
 		    embedBuilder.setTitle(track.getInfo().title, track.getInfo().uri);
@@ -222,20 +241,17 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
 		{
 		    embedBuilder.setTitle(track.getInfo().title);
 		}
+	}
 
-		if(track instanceof YoutubeAudioTrack && manager.getBot().getConfig().useNPImages())
+	private void setAuthorOnEmbedBuilder(Guild guild, EmbedBuilder embedBuilder) {
+		if(getRequester() != 0)
 		{
-		    embedBuilder.setThumbnail("https://img.youtube.com/vi/"+track.getIdentifier()+"/mqdefault.jpg");
+		    User user = guild.getJDA().getUserById(getRequester());
+		    if(user==null)
+		        embedBuilder.setAuthor("Unknown (ID:"+getRequester()+")", null, null);
+		    else
+		        embedBuilder.setAuthor(user.getName()+"#"+user.getDiscriminator(), null, user.getEffectiveAvatarUrl());
 		}
-		
-		if(track.getInfo().author != null && !track.getInfo().author.isEmpty())
-		    embedBuilder.setFooter("Source: " + track.getInfo().author, null);
-
-		double progress = (double)audioPlayer.getPlayingTrack().getPosition()/track.getDuration();
-		embedBuilder.setDescription((audioPlayer.isPaused() ? JMusicBot.PAUSE_EMOJI : JMusicBot.PLAY_EMOJI)
-		        + " "+FormatUtil.progressBar(progress)
-		        + " `[" + FormatUtil.formatTime(track.getPosition()) + "/" + FormatUtil.formatTime(track.getDuration()) + "]` "
-		        + FormatUtil.volumeIcon(audioPlayer.getVolume()));
 	}
     
     public Message getNoMusicPlaying(JDA jda)
