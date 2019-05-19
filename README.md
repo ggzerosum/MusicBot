@@ -2,7 +2,6 @@
 
 # JMusicBot
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8b572b20d0054de68ccbc40b5f1e8d45)](https://app.codacy.com/app/SuhoSon/MusicBot?utm_source=github.com&utm_medium=referral&utm_content=SuhoSon/MusicBot&utm_campaign=Badge_Grade_Dashboard)
 [![Downloads](https://img.shields.io/github/downloads/jagrosh/MusicBot/total.svg)](https://github.com/jagrosh/MusicBot/releases/latest)
 [![Stars](https://img.shields.io/github/stars/jagrosh/MusicBot.svg)](https://github.com/jagrosh/MusicBot/stargazers)
 [![Release](https://img.shields.io/github/release/jagrosh/MusicBot.svg)](https://github.com/jagrosh/MusicBot/releases/latest)
