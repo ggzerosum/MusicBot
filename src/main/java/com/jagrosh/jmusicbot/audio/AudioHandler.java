@@ -190,46 +190,53 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
         {
             Guild guild = guild(jda);
             AudioTrack track = audioPlayer.getPlayingTrack();
-            MessageBuilder mb = new MessageBuilder();
-            mb.append(FormatUtil.filter(manager.getBot().getConfig().getSuccess()+" **Now Playing in "+guild.getSelfMember().getVoiceState().getChannel().getName()+"...**"));
-            EmbedBuilder eb = new EmbedBuilder();
-            eb.setColor(guild.getSelfMember().getColor());
-            if(getRequester() != 0)
-            {
-                User u = guild.getJDA().getUserById(getRequester());
-                if(u==null)
-                    eb.setAuthor("Unknown (ID:"+getRequester()+")", null, null);
-                else
-                    eb.setAuthor(u.getName()+"#"+u.getDiscriminator(), null, u.getEffectiveAvatarUrl());
-            }
-
-            try 
-            {
-                eb.setTitle(track.getInfo().title, track.getInfo().uri);
-            }
-            catch(Exception e) 
-            {
-                eb.setTitle(track.getInfo().title);
-            }
-
-            if(track instanceof YoutubeAudioTrack && manager.getBot().getConfig().useNPImages())
-            {
-                eb.setThumbnail("https://img.youtube.com/vi/"+track.getIdentifier()+"/mqdefault.jpg");
-            }
+            MessageBuilder messageBuilder = new MessageBuilder();
+            EmbedBuilder embedBuilder = new EmbedBuilder();
             
-            if(track.getInfo().author != null && !track.getInfo().author.isEmpty())
-                eb.setFooter("Source: " + track.getInfo().author, null);
-
-            double progress = (double)audioPlayer.getPlayingTrack().getPosition()/track.getDuration();
-            eb.setDescription((audioPlayer.isPaused() ? JMusicBot.PAUSE_EMOJI : JMusicBot.PLAY_EMOJI)
-                    + " "+FormatUtil.progressBar(progress)
-                    + " `[" + FormatUtil.formatTime(track.getPosition()) + "/" + FormatUtil.formatTime(track.getDuration()) + "]` "
-                    + FormatUtil.volumeIcon(audioPlayer.getVolume()));
+            messageBuilder.append(FormatUtil.filter(manager.getBot().getConfig().getSuccess()+" **Now Playing in "+guild.getSelfMember().getVoiceState().getChannel().getName()+"...**"));
             
-            return mb.setEmbed(eb.build()).build();
+            setAttributesOnEmbedBuilder(guild, track, embedBuilder);
+            
+            return messageBuilder.setEmbed(embedBuilder.build()).build();
         }
         else return null;
     }
+
+	private void setAttributesOnEmbedBuilder(Guild guild, AudioTrack track, EmbedBuilder embedBuilder) {
+		embedBuilder.setColor(guild.getSelfMember().getColor());
+		
+		if(getRequester() != 0)
+		{
+		    User user = guild.getJDA().getUserById(getRequester());
+		    if(user==null)
+		        embedBuilder.setAuthor("Unknown (ID:"+getRequester()+")", null, null);
+		    else
+		        embedBuilder.setAuthor(user.getName()+"#"+user.getDiscriminator(), null, user.getEffectiveAvatarUrl());
+		}
+
+		try 
+		{
+		    embedBuilder.setTitle(track.getInfo().title, track.getInfo().uri);
+		}
+		catch(Exception e) 
+		{
+		    embedBuilder.setTitle(track.getInfo().title);
+		}
+
+		if(track instanceof YoutubeAudioTrack && manager.getBot().getConfig().useNPImages())
+		{
+		    embedBuilder.setThumbnail("https://img.youtube.com/vi/"+track.getIdentifier()+"/mqdefault.jpg");
+		}
+		
+		if(track.getInfo().author != null && !track.getInfo().author.isEmpty())
+		    embedBuilder.setFooter("Source: " + track.getInfo().author, null);
+
+		double progress = (double)audioPlayer.getPlayingTrack().getPosition()/track.getDuration();
+		embedBuilder.setDescription((audioPlayer.isPaused() ? JMusicBot.PAUSE_EMOJI : JMusicBot.PLAY_EMOJI)
+		        + " "+FormatUtil.progressBar(progress)
+		        + " `[" + FormatUtil.formatTime(track.getPosition()) + "/" + FormatUtil.formatTime(track.getDuration()) + "]` "
+		        + FormatUtil.volumeIcon(audioPlayer.getVolume()));
+	}
     
     public Message getNoMusicPlaying(JDA jda)
     {
