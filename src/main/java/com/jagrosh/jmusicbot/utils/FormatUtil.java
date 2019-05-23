@@ -16,9 +16,6 @@
 package com.jagrosh.jmusicbot.utils;
 
 import java.util.List;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.VoiceChannel;
 
 /**
  *
@@ -30,64 +27,63 @@ public class FormatUtil {
     {
         if(duration == Long.MAX_VALUE)
             return "LIVE";
+        
         long seconds = Math.round(duration/1000.0);
+        long minutes = (seconds/60) % 60;
         long hours = seconds/(60*60);
-        seconds %= 60*60;
-        long minutes = seconds/60;
+        String hoursFormat = "";
+        
         seconds %= 60;
-        return (hours>0 ? hours+":" : "") + (minutes<10 ? "0"+minutes : minutes) + ":" + (seconds<10 ? "0"+seconds : seconds);
+        
+        if(hours > 0)
+           hoursFormat = hours + ":";
+        
+        return String.format("%s%02d:%02d", hoursFormat, minutes, seconds);
     }
         
     public static String progressBar(double percent)
     {
-        String str = "";
-        for(int i=0; i<12; i++)
-            if(i == (int)(percent*12))
-                str+="\uD83D\uDD18"; // 🔘
-            else
-                str+="▬";
+        String str = "▬▬▬▬▬▬▬▬▬▬▬▬";
+        
+        for(int i=0; i<12; i++) {
+           if(i == (int)(percent*12)) {
+              str = str.substring(0,i) + "\uD83D\uDD18"  + str.substring(i+1,12); // 🔘
+              break;
+           }
+        }
+
         return str;
     }
     
     public static String volumeIcon(int volume)
     {
-        if(volume == 0)
-            return "\uD83D\uDD07"; // 🔇
-        if(volume < 30)
-            return "\uD83D\uDD08"; // 🔈
-        if(volume < 70)
-            return "\uD83D\uDD09"; // 🔉
-        return "\uD83D\uDD0A";     // 🔊
+       switch(volume / 10) {
+       case 0:
+          return "\uD83D\uDD07"; // 🔇
+       case 1:
+       case 2:
+          return "\uD83D\uDD08"; // 🔈
+       case 3:
+       case 4:
+       case 5:
+       case 6:
+          return "\uD83D\uDD09"; // 🔉
+       default:
+          return "\uD83D\uDD0A"; // 🔊
+       }
     }
     
-    public static String listOfTChannels(List<TextChannel> list, String query)
-    {
-        String out = " Multiple text channels found matching \""+query+"\":";
-        for(int i=0; i<6 && i<list.size(); i++)
-            out+="\n - "+list.get(i).getName()+" (<#"+list.get(i).getId()+">)";
+    public static <T> String listOfChannels(List<T> list, String query, String[] entries) {
+    	String channelsListMessage = query;
+    	
+    	for(int i=0; i<6 && i<list.size(); i++) {
+    		channelsListMessage += entries[i];
+    	}
+    	
         if(list.size()>6)
-            out+="\n**And "+(list.size()-6)+" more...**";
-        return out;
-    }
-    
-    public static String listOfVChannels(List<VoiceChannel> list, String query)
-    {
-        String out = " Multiple voice channels found matching \""+query+"\":";
-        for(int i=0; i<6 && i<list.size(); i++)
-            out+="\n - "+list.get(i).getName()+" (ID:"+list.get(i).getId()+")";
-        if(list.size()>6)
-            out+="\n**And "+(list.size()-6)+" more...**";
-        return out;
-    }
-    
-    public static String listOfRoles(List<Role> list, String query)
-    {
-        String out = " Multiple text channels found matching \""+query+"\":";
-        for(int i=0; i<6 && i<list.size(); i++)
-            out+="\n - "+list.get(i).getName()+" (ID:"+list.get(i).getId()+")";
-        if(list.size()>6)
-            out+="\n**And "+(list.size()-6)+" more...**";
-        return out;
+            channelsListMessage+="\n**And "+(list.size()-6)+" more...**";
+        
+        return channelsListMessage;
     }
     
     public static String filter(String input)
