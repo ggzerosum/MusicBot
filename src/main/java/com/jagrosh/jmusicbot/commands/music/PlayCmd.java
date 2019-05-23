@@ -246,12 +246,12 @@ public class PlayCmd extends MusicCommand
             {
                 AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
                 playlist.loadTracks(bot.getPlayerManager(), (at)->handler.addTrack(new QueuedTrack(at, event.getAuthor())), () -> {
-                    StringBuilder builder = new StringBuilder(playlist.getTracks().isEmpty() 
+                    StringBuilder builder = new StringBuilder(playlist.getAudioTracks().isEmpty()
                             ? event.getClient().getWarning()+" No tracks were loaded!" 
-                            : event.getClient().getSuccess()+" Loaded **"+playlist.getTracks().size()+"** tracks!");
-                    if(!playlist.getErrors().isEmpty())
+                            : event.getClient().getSuccess()+" Loaded **"+playlist.getAudioTracks().size()+"** tracks!");
+                    if(!playlist.getPlaylistLoadErrors().isEmpty())
                         builder.append("\nThe following tracks failed to load:");
-                    playlist.getErrors().forEach(err -> builder.append("\n`[").append(err.getIndex()+1).append("]` **").append(err.getItem()).append("**: ").append(err.getReason()));
+                    playlist.getPlaylistLoadErrors().forEach(err -> builder.append("\n`[").append(err.getIndex()+1).append("]` **").append(err.getItem()).append("**: ").append(err.getReason()));
                     String str = builder.toString();
                     if(str.length()>2000)
                         str = str.substring(0,1994)+" (...)";
