@@ -64,39 +64,52 @@ public class PlayCmd extends MusicCommand
     {
         if(event.getArgs().isEmpty() && event.getMessage().getAttachments().isEmpty())
         {
-            AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
-            if(handler.getPlayer().getPlayingTrack()!=null && handler.getPlayer().isPaused())
-            {
-                boolean isDJ = event.getMember().hasPermission(Permission.MANAGE_SERVER);
-                if(!isDJ)
-                    isDJ = event.isOwner();
-                Settings settings = event.getClient().getSettingsFor(event.getGuild());
-                Role dj = settings.getRole(event.getGuild());
-                if(!isDJ && dj!=null)
-                    isDJ = event.getMember().getRoles().contains(dj);
-                if(!isDJ)
-                    event.replyError("Only DJs can unpause the player!");
-                else
-                {
-                    handler.getPlayer().setPaused(false);
-                    event.replySuccess("Resumed **"+handler.getPlayer().getPlayingTrack().getInfo().title+"**.");
-                }
+            if(doResume(event))
                 return;
-            }
-            StringBuilder builder = new StringBuilder(event.getClient().getWarning()+" Play Commands:\n");
-            builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" <song title>` - plays the first result from Youtube");
-            builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" <URL>` - plays the provided song, playlist, or stream");
-            for(Command cmd: children)
-                builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" ").append(cmd.getName()).append(" ").append(cmd.getArguments()).append("` - ").append(cmd.getHelp());
-            event.reply(builder.toString());
+            printUsage(event);
             return;
         }
-        String args = event.getArgs().startsWith("<") && event.getArgs().endsWith(">") 
-                ? event.getArgs().substring(1,event.getArgs().length()-1) 
+        doPlay(event);
+    }
+
+    private void doPlay(CommandEvent event) {
+        String args = event.getArgs().startsWith("<") && event.getArgs().endsWith(">")
+                ? event.getArgs().substring(1,event.getArgs().length()-1)
                 : event.getArgs().isEmpty() ? event.getMessage().getAttachments().get(0).getUrl() : event.getArgs();
         event.reply(loadingEmoji+" Loading... `["+args+"]`", m -> bot.getPlayerManager().loadItemOrdered(event.getGuild(), args, new ResultHandler(m,event,false)));
     }
-    
+
+    private void printUsage(CommandEvent event) {
+        StringBuilder builder = new StringBuilder(event.getClient().getWarning()+" Play Commands:\n");
+        builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" <song title>` - plays the first result from Youtube");
+        builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" <URL>` - plays the provided song, playlist, or stream");
+        for(Command cmd: children)
+            builder.append("\n`").append(event.getClient().getPrefix()).append(name).append(" ").append(cmd.getName()).append(" ").append(cmd.getArguments()).append("` - ").append(cmd.getHelp());
+        event.reply(builder.toString());
+    }
+
+    private boolean doResume(CommandEvent event) {
+        AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
+        if(handler.getPlayer().getPlayingTrack()!=null && handler.getPlayer().isPaused()){
+            boolean isDJ = event.getMember().hasPermission(Permission.MANAGE_SERVER);
+            if(!isDJ)
+                isDJ = event.isOwner();
+            Settings settings = event.getClient().getSettingsFor(event.getGuild());
+            Role dj = settings.getRole(event.getGuild());
+            if(!isDJ && dj!=null)
+                isDJ = event.getMember().getRoles().contains(dj);
+            if(!isDJ)
+                event.replyError("Only DJs can unpause the player!");
+            else
+            {
+                handler.getPlayer().setPaused(false);
+                event.replySuccess("Resumed **"+handler.getPlayer().getPlayingTrack().getInfo().title+"**.");
+            }
+            return true;
+        }
+        return false;
+    }
+
     private class ResultHandler implements AudioLoadResultHandler
     {
         private final Message m;
