@@ -20,6 +20,7 @@ import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.QueuedTrack;
 import com.jagrosh.jmusicbot.commands.MusicCommand;
+import com.jagrosh.jmusicbot.queue.FairQueue;
 import com.jagrosh.jmusicbot.settings.Settings;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.User;
@@ -45,14 +46,15 @@ public class RemoveCmd extends MusicCommand
     public void doCommand(CommandEvent event) 
     {
         AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
-        if(handler.getQueue().isEmpty())
+        final FairQueue<QueuedTrack> trackQueue = handler.getQueue();
+        if(trackQueue.isEmpty())
         {
             event.replyError("There is nothing in the queue!");
             return;
         }
         if(event.getArgs().equalsIgnoreCase("all"))
         {
-            int count = handler.getQueue().removeAll(event.getAuthor().getIdLong());
+            int count = trackQueue.removeAll(event.getAuthor().getIdLong());
             if(count==0)
                 event.replyWarning("You don't have any songs in the queue!");
             else
@@ -65,32 +67,32 @@ public class RemoveCmd extends MusicCommand
         } catch(NumberFormatException e) {
             pos = 0;
         }
-        if(pos<1 || pos>handler.getQueue().size())
+        if(pos<1 || pos> trackQueue.size())
         {
-            event.replyError("Position must be a valid integer between 1 and "+handler.getQueue().size()+"!");
+            event.replyError("Position must be a valid integer between 1 and "+ trackQueue.size()+"!");
             return;
         }
         Settings settings = event.getClient().getSettingsFor(event.getGuild());
         boolean isDJ = event.getMember().hasPermission(Permission.MANAGE_SERVER);
         if(!isDJ)
             isDJ = event.getMember().getRoles().contains(settings.getRole(event.getGuild()));
-        QueuedTrack qt = handler.getQueue().get(pos-1);
+        QueuedTrack qt = trackQueue.get(pos-1);
         if(qt.getIdentifier()==event.getAuthor().getIdLong())
         {
-            handler.getQueue().remove(pos-1);
+            trackQueue.remove(pos-1);
             event.replySuccess("Removed **"+qt.getTrack().getInfo().title+"** from the queue");
         }
         else if(isDJ)
         {
-            handler.getQueue().remove(pos-1);
-            User u;
+            trackQueue.remove(pos-1);
+            User user;
             try {
-                u = event.getJDA().getUserById(qt.getIdentifier());
+                user = event.getJDA().getUserById(qt.getIdentifier());
             } catch(Exception e) {
-                u = null;
+                user = null;
             }
             event.replySuccess("Removed **"+qt.getTrack().getInfo().title
-                    +"** from the queue (requested by "+(u==null ? "someone" : "**"+u.getName()+"**")+")");
+                    +"** from the queue (requested by "+(user==null ? "someone" : "**"+user.getName()+"**")+")");
         }
         else
         {
